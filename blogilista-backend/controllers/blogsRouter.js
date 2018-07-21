@@ -68,7 +68,7 @@ blogsRouter.put('/:id', async (request, response) => {
 
   const blog = new Blog({
     _id: request.params.id,
-    body
+    ...body
   })
   
   try {
