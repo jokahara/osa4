@@ -25,7 +25,7 @@ blogsRouter.post('/', async (request, response) => {
     if (!request.token || !decodedToken.id) {
       return response.status(401).json({ error: 'token missing or invalid' })
     }
-
+    
     if (body.title === undefined) {
       return response.status(400).json({ error: 'title missing' })
     }
@@ -33,7 +33,7 @@ blogsRouter.post('/', async (request, response) => {
       return response.status(400).json({ error: 'url missing' })
     }
 
-    let user = await User.findById(decodedToken.id)
+    const user = await User.findById(decodedToken.id)
     
     const blog = new Blog({
       ...body,
@@ -44,7 +44,10 @@ blogsRouter.post('/', async (request, response) => {
     await user.set({ blogs: user.blogs.concat(blog._id) })
     await user.save()
     
-    response.status(201).json(await blog.save())
+    await blog.save()
+    response.status(201).json(
+      Blog.format(await blog.populate('user', { username: 1, name: 1}))
+    )
   } catch (exception) {
     if (exception.name === 'JsonWebTokenError' ) {
       response.status(401).json({ error: exception.message })
@@ -87,11 +90,11 @@ blogsRouter.delete('/:id', async (request, response) => {
     if (!request.token || !decodedToken.id) {
       return response.status(401).json({ error: 'token missing or invalid' })
     }
-
+    
     const blog = await Blog.findById(request.params.id)
     const user = await User.findById(decodedToken.id)
 
-    if (blog.user.toString() === decodedToken.id.toString()) {
+    if (!blog.user || blog.user.toString() === decodedToken.id.toString()) {
       await Blog.findByIdAndRemove(request.params.id)
       
       await user.set({ blogs: user.blogs.filter(b => b._id !== request.params.id) })

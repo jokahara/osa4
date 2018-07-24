@@ -12,6 +12,18 @@ describe('blog tests', async () => {
     for (let blog of helper.initialBlogs) {
       await new Blog(blog).save()
     }
+    
+    await User.remove({})
+
+    const newUser = {
+      username: 'mluukkai',
+      name: 'Matti Luukkainen',
+      password: 'salainen'
+    }
+  
+    await api
+      .post('/api/users')
+      .send(newUser)
   })
 
   test('blogs are returned as json', async () => {
@@ -33,7 +45,7 @@ describe('blog tests', async () => {
   
   describe('addition of new blog', async () => {
 
-    test.only('a valid blog can be added ', async () => {
+    test('a valid blog can be added ', async () => {
       const newBlog = {
         title: "POST test",
         author: "jokahara",
@@ -42,13 +54,23 @@ describe('blog tests', async () => {
       } 
 
       const blogsBefore = await helper.blogsInDb()
-      
-      console.log('TOKEN:', token)
 
+      const newUser = {
+        username: 'mluukkai',
+        name: 'Matti Luukkainen',
+        password: 'salainen'
+      }
+
+      const login = await api
+        .post('/api/login')
+        .send(newUser)
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+      
       await api
         .post('/api/blogs')
         .send(newBlog)
-        .set('Authorization', `bearer ${token}`)
+        .set('Authorization', `bearer ${login.body.token}`)
         .expect(201)
         .expect('Content-Type', /application\/json/)
     
@@ -66,12 +88,25 @@ describe('blog tests', async () => {
       }  
 
       const blogsBefore = await helper.blogsInDb()
-  
+
+      const newUser = {
+        username: 'mluukkai',
+        name: 'Matti Luukkainen',
+        password: 'salainen'
+      }
+      
+      const login = await api
+        .post('/api/login')
+        .send(newUser)
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `bearer ${login.body.token}`)
         .expect(400)
-
+      
       const blogsAfter = await helper.blogsInDb()
 
       expect(blogsAfter.length).toBe(blogsBefore.length)
@@ -85,10 +120,23 @@ describe('blog tests', async () => {
       }  
   
       const blogsBefore = await helper.blogsInDb()
-  
+      
+      const newUser = {
+        username: 'mluukkai',
+        name: 'Matti Luukkainen',
+        password: 'salainen'
+      }
+      
+      const login = await api
+        .post('/api/login')
+        .send(newUser)
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `bearer ${login.body.token}`)
         .expect(400)
 
       const blogsAfter = await helper.blogsInDb()
@@ -102,10 +150,23 @@ describe('blog tests', async () => {
         author: "jokahara",
         url: "www.asdf.com",
       }
-  
+
+      const newUser = {
+        username: 'mluukkai',
+        name: 'Matti Luukkainen',
+        password: 'salainen'
+      }
+      
+      const login = await api
+        .post('/api/login')
+        .send(newUser)
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `bearer ${login.body.token}`)
         .expect(201)
     
       const blogsAfter = await helper.blogsInDb()
@@ -129,8 +190,21 @@ describe('blog tests', async () => {
     test('DELETE /api/blogs/:id succeeds with proper statuscode', async () => {
       const blogsBefore = await helper.blogsInDb()
 
+      const newUser = {
+        username: 'mluukkai',
+        name: 'Matti Luukkainen',
+        password: 'salainen'
+      }
+      
+      const login = await api
+        .post('/api/login')
+        .send(newUser)
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+        
       await api
         .delete(`/api/blogs/${addedBlog._id}`)
+        .set('Authorization', `bearer ${login.body.token}`)
         .expect(204)
 
       const blogsAfter = await helper.blogsInDb()
@@ -142,7 +216,6 @@ describe('blog tests', async () => {
 })
 
 describe('user tests', async () => {
-
   beforeAll(async () => {
     await User.remove({})
     const user = new User({ username: 'root', password: 'sekret' })
